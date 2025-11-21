@@ -40,7 +40,7 @@ public class Swarm : MonoBehaviour
 
     public float wanderWeight = 0.3f;
 
-    public float neighbourDistance = 2.0f;
+    public float neighbourDistance = 2.0f; // fov = 180
 
     public float initializationRadius = 1.0f;
 
@@ -50,19 +50,26 @@ public class Swarm : MonoBehaviour
 
     private Transform[] boidObjects;
 
-    private float sqrNeighbourDistance;
+    private float sqrNeighbourDistance; 
 
     private Vector3 boidZeroGoal;
     private NavMeshPath boidZeroPath;
     private int currentCorner;
     private bool boidZeroNavigatingTowardGoal = false;
 
+    private Vector2[] worldBounds = {new Vector2(-8f, 8f), new Vector2(1f, 4f), new Vector2(-8f, 8f)}; //  {x, y, z}
+    private Vector3[] new_positions;
+    private Vector3[] new_velocitys;
 
     /// <summary>
     /// Start, this function is called before the first frame
     /// </summary>
     private void Start()
     {
+        sqrNeighbourDistance = Mathf.Sqrt(neighbourDistance);
+        InitBoids();
+        new_positions = new Vector3[numberOfBoids];
+        new_velocitys = new Vector3[numberOfBoids];
 
     }
 
@@ -71,7 +78,20 @@ public class Swarm : MonoBehaviour
     /// </summary>
     private void InitBoids()
     {
-       
+        boids = new BBoid[numberOfBoids];
+       for(int i = 0; i < numberOfBoids; i++){
+            BBoid new_boid= new BBoid();
+            // set parameters (velocity and forces are calculated later)
+            new_boid.position = new Vector3(); // random
+            new_boid.forward = new Vector3(); // random
+            // add it to boids
+            boids[i] = new_boid;
+
+            // intialize an instance of the boidPrefab
+            Transform new_bug = Instantiate(boidPrefab);
+            new_bug.position = boids[i].position;
+            new_bug.parent = this.transform;
+       }
     }
 
 
@@ -80,7 +100,48 @@ public class Swarm : MonoBehaviour
     /// </summary>
     public void ResetBoidForces()
     {
-        
+        for(int i = 0; i < numberOfBoids; i++){
+            int[] neighbors = calculateNeighbors(i);
+            boids[i].currentTotalForce = Vector3.zero;
+            if(neighbors.Length != 0){
+                // alignment = (1/N)(sum_{n=0}^N v_{a_n}) - v
+
+                boids[i].currentTotalForce += alignmentWeight*(boids[i].alignment*boidForceScale - boids[i].velocity);
+
+                // cohesion = (1/N)(sum_{n=0}^N x_n)-x
+
+                boids[i].currentTotalForce += cohesionWeight*(boids[i].cohesion*boidForceScale - boids[i].velocity);
+
+                // separation = 1/N(sum_{n=0}^N x-x_n)
+
+                boids[i].currentTotalForce += separationWeight*(boids[i].separation*boidForceScale - boids[i].velocity);
+            } else {
+                // wander = v_i
+                boids[i].currentTotalForce += wanderWeight*(boids[i].velocity*boidForceScale - boids[i].velocity);
+            }
+
+            // obstacle = -
+        }
+
+        // then add the path info to boid zero
+    }
+
+    private int[] calculateNeighbors(int i){
+        int[] neighbors = new int[] {};
+        for(int j = 0; j < numberOfBoids; j++){
+            if(j != i){
+                // distance check 
+                if(visible(i, j)) {
+                    neighbors[neighbors.Length]=j; // idk if this will add corectly
+                }
+            }
+        }
+        return neighbors;
+    }
+
+    private bool visible(int i, int j){
+
+        return true;
     }
 
 
@@ -89,7 +150,20 @@ public class Swarm : MonoBehaviour
     /// </summary>
     private void FixedUpdate()
     {
-        
+        // first we calculate the boid forces
+        ResetBoidForces();
+
+        // next, we calculate the new velocities and positions using Symplectic Euler (same integration scheme as assignment 1)
+        for(int i = 0; i < numberOfBoids; i++){
+            new_velocitys[i] = boids[i].velocity + Time.fixedDeltaTime*boids[i].currentTotalForce;
+            new_positions[i] = boids[i].position + Time.fixedDeltaTime*new_velocitys[i];
+        }
+
+        // next we update all new velocities and positions
+        for(int i = 0; i < numberOfBoids; i++){
+            boids[i].velocity = new_velocitys[i];
+            boids[i].position = new_positions[i];
+        }
     }
 
 
@@ -124,7 +198,10 @@ public class Swarm : MonoBehaviour
 
     public void SetGoal(Vector3 goal)
     {
-
+        if(!boidZeroNavigatingTowardGoal){
+            boidZeroGoal = goal;
+            boidZeroNavigatingTowardGoal = true;
+        }
     }
 }
 
