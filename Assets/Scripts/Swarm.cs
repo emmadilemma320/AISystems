@@ -147,9 +147,23 @@ public class Swarm : MonoBehaviour
             foreach(Collider o in obstacles){
                 temp += (x - o.ClosestPointOnBounds(x)).normalized;
             }
-            if(Mathf.Abs(x.x) > 8){
-                
+            if(x.x > 8f){
+                temp += Vector3.left;
+            } elif(x.x < -8f){
+                temp += Vector3.right;
             }
+            if(x.z > 8f){
+                temp += Vector3.back;
+            } elif(x.z < -8f){
+                temp += Vector3.forward;
+            }
+            if(x.y > 4){
+                temp += Vector3.down;
+            } elif(x.y < 1){
+                temp += Vector3.up;
+            }
+            boids[i].obstacle = temp.normalized;
+            boids[i].currentTotalForce += obstacleWeight*(boids[i].obstacle*boidForceScale - boids[i].velocity);
 
             
         }
