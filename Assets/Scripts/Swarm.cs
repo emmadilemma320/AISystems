@@ -80,7 +80,7 @@ public class Swarm : MonoBehaviour
     {
         boids = new BBoid[numberOfBoids];
        for(int i = 0; i < numberOfBoids; i++){
-            BBoid new_boid= new BBoid();
+            BBoid new_boid = new BBoid();
             // set parameters (velocity and forces are calculated later)
             new_boid.position = new Vector3(); // random
             new_boid.forward = new Vector3(); // random
@@ -104,16 +104,37 @@ public class Swarm : MonoBehaviour
             int[] neighbors = calculateNeighbors(i);
             boids[i].currentTotalForce = Vector3.zero;
             if(neighbors.Length != 0){
+                Vector3 temp;
                 // alignment = (1/N)(sum_{n=0}^N v_{a_n}) - v
 
+                temp = Vector3.zero;
+                foreach(var n in neighbors){ // from 0 to N
+                    temp += boids[n].velocity; // v_{a_n}
+                }
+                temp /= neighbors.Length; // 1/N
+                temp -= boids[i].velocity; // -v (may be incorrect)
+                boids[i].alignment = temp; 
                 boids[i].currentTotalForce += alignmentWeight*(boids[i].alignment*boidForceScale - boids[i].velocity);
+
 
                 // cohesion = (1/N)(sum_{n=0}^N x_n)-x
 
+                temp = Vector3.zero;
+                foreach(var n in neighbors){ // from 0 to N
+                    temp += boids[n].position; // x_n
+                }
+                temp /= neighbors.Length; // 1/N
+                temp -= boids[i].position; // -x
+                boids[i].cohesion = temp;
                 boids[i].currentTotalForce += cohesionWeight*(boids[i].cohesion*boidForceScale - boids[i].velocity);
 
                 // separation = 1/N(sum_{n=0}^N x-x_n)
-
+                temp = Vector3.zero;
+                foreach(var n in neighbors){ // from 0 to N
+                    temp = boids[i].position - boids[n].position; // x - x_n
+                }
+                temp /= neighbors.Length; // 1/N
+                boids[i].separation = temp;
                 boids[i].currentTotalForce += separationWeight*(boids[i].separation*boidForceScale - boids[i].velocity);
             } else {
                 // wander = v_i
