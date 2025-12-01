@@ -57,7 +57,6 @@ public class Swarm : MonoBehaviour
     private int currentCorner;
     private bool boidZeroNavigatingTowardGoal = false;
 
-    private Vector2[] worldBounds = {new Vector2(-8f, 8f), new Vector2(1f, 4f), new Vector2(-8f, 8f)}; //  {x, y, z}
     private Vector3[] new_positions;
     private Vector3[] new_velocitys;
 
@@ -66,7 +65,7 @@ public class Swarm : MonoBehaviour
     /// </summary>
     private void Start()
     {
-        sqrNeighbourDistance = Mathf.Sqrt(neighbourDistance);
+        sqrNeighbourDistance = neighbourDistance * neighbourDistance;
         InitBoids();
         new_positions = new Vector3[numberOfBoids];
         new_velocitys = new Vector3[numberOfBoids];
@@ -103,45 +102,56 @@ public class Swarm : MonoBehaviour
         for(int i = 0; i < numberOfBoids; i++){
             int[] neighbors = calculateNeighbors(i);
             boids[i].currentTotalForce = Vector3.zero;
+            Vector3 temp;
+            Vector3 x = boids[i].position;
             if(neighbors.Length != 0){
-                Vector3 temp;
                 // alignment = (1/N)(sum_{n=0}^N v_{a_n}) - v
 
                 temp = Vector3.zero;
-                foreach(var n in neighbors){ // from 0 to N
+                foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].velocity; // v_{a_n}
                 }
                 temp /= neighbors.Length; // 1/N
                 temp -= boids[i].velocity; // -v (may be incorrect)
-                boids[i].alignment = temp; 
+                boids[i].alignment = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += alignmentWeight*(boids[i].alignment*boidForceScale - boids[i].velocity);
 
 
                 // cohesion = (1/N)(sum_{n=0}^N x_n)-x
 
                 temp = Vector3.zero;
-                foreach(var n in neighbors){ // from 0 to N
+                foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].position; // x_n
                 }
                 temp /= neighbors.Length; // 1/N
-                temp -= boids[i].position; // -x
-                boids[i].cohesion = temp;
+                temp -= x; // -x
+                boids[i].cohesion = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += cohesionWeight*(boids[i].cohesion*boidForceScale - boids[i].velocity);
 
                 // separation = 1/N(sum_{n=0}^N x-x_n)
                 temp = Vector3.zero;
-                foreach(var n in neighbors){ // from 0 to N
-                    temp = boids[i].position - boids[n].position; // x - x_n
+                foreach(int n in neighbors){ // from 0 to N
+                    temp = x - boids[n].position; // x - x_n
                 }
                 temp /= neighbors.Length; // 1/N
-                boids[i].separation = temp;
+                boids[i].separation = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += separationWeight*(boids[i].separation*boidForceScale - boids[i].velocity);
             } else {
                 // wander = v_i
                 boids[i].currentTotalForce += wanderWeight*(boids[i].velocity*boidForceScale - boids[i].velocity);
             }
 
-            // obstacle = -
+            // obstacle = sum of all obstacle normals within the obstacle check radius
+            temp = Vector3.zero;
+            Collider[] obstacles = Physics.OverlapSphere(boids[i].position, obstacleCheckRadius);
+            foreach(Collider o in obstacles){
+                temp += (x - o.ClosestPointOnBounds(x)).normalized;
+            }
+            if(Mathf.Abs(x.x) > 8){
+                
+            }
+
+            
         }
 
         // then add the path info to boid zero
@@ -151,8 +161,10 @@ public class Swarm : MonoBehaviour
         int[] neighbors = new int[] {};
         for(int j = 0; j < numberOfBoids; j++){
             if(j != i){
-                // distance check 
-                if(visible(i, j)) {
+                Vector3 diffV = boids[i].position - boids[j].position;
+                if((diffV.sqrMagnitude < sqrNeighbourDistance) && // distance check
+                    (Vector3.Dot(boids[i].forward, diffV) > 0)) // FOV check (180)
+                {
                     neighbors[neighbors.Length]=j; // idk if this will add corectly
                 }
             }
@@ -160,10 +172,6 @@ public class Swarm : MonoBehaviour
         return neighbors;
     }
 
-    private bool visible(int i, int j){
-
-        return true;
-    }
 
 
     /// <summary>
