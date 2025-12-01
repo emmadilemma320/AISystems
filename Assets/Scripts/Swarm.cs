@@ -144,9 +144,10 @@ public class Swarm : MonoBehaviour
             // obstacle = sum of all obstacle normals within the obstacle check radius
             temp = Vector3.zero;
             Collider[] obstacles = Physics.OverlapSphere(boids[i].position, obstacleCheckRadius);
-            foreach(Collider o in obstacles){
+            foreach(Collider o in obstacles){ 
                 temp += (x - o.ClosestPointOnBounds(x)).normalized;
             }
+            // plus all the walls
             if(x.x > 8f){
                 temp += Vector3.left;
             } elif(x.x < -8f){
@@ -164,8 +165,6 @@ public class Swarm : MonoBehaviour
             }
             boids[i].obstacle = temp.normalized;
             boids[i].currentTotalForce += obstacleWeight*(boids[i].obstacle*boidForceScale - boids[i].velocity);
-
-            
         }
 
         // then add the path info to boid zero
