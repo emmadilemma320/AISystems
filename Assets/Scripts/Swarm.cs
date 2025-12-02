@@ -206,7 +206,24 @@ public class Swarm : MonoBehaviour
         // next, we calculate the new velocities and positions using Symplectic Euler (same integration scheme as assignment 1)
         for(int i = 0; i < numberOfBoids; i++){
             new_velocitys[i] = boids[i].velocity + Time.fixedDeltaTime*boids[i].currentTotalForce;
+            if(new_velocitys[i].x > maxSpeed){
+                new_velocitys[i].x = maxSpeed;
+            } else if(new_velocitys[i].x < -maxSpeed){
+                new_velocitys[i].x = -maxSpeed;
+            }
+            if(new_velocitys[i].y > maxSpeed){
+                new_velocitys[i].y = maxSpeed;
+            } else if(new_velocitys[i].y < -maxSpeed){
+                new_velocitys[i].y = -maxSpeed;
+            }
+            if(new_velocitys[i].z > maxSpeed){
+                new_velocitys[i].z = maxSpeed;
+            } else if(new_velocitys[i].z < -maxSpeed){
+                new_velocitys[i].z = -maxSpeed;
+            }
+            
             new_positions[i] = boids[i].position + Time.fixedDeltaTime*new_velocitys[i];
+
         }
 
         // next we update all new velocities and positions
