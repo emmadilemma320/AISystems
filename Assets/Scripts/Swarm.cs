@@ -78,18 +78,26 @@ public class Swarm : MonoBehaviour
     private void InitBoids()
     {
         boids = new BBoid[numberOfBoids];
+        boidObjects = new Transform[numberOfBoids];
        for(int i = 0; i < numberOfBoids; i++){
             BBoid new_boid = new BBoid();
             // set parameters (velocity and forces are calculated later)
-            new_boid.position = new Vector3(); // random
-            new_boid.forward = new Vector3(); // random
+            new_boid.position = Random.insideUnitSphere*initializationRadius + transform.position; 
+            Quaternion q = new Quaternion();
+                float x = Random.Range(-initializationForwardRandomRange, initializationForwardRandomRange);
+                float y = Random.Range(-initializationForwardRandomRange, initializationForwardRandomRange);
+                float z = Random.Range(-initializationForwardRandomRange, initializationForwardRandomRange);
+            q.eulerAngles = new Vector3(x, y, z);
+            new_boid.forward = q*Vector3.forward; 
             // add it to boids
             boids[i] = new_boid;
 
             // intialize an instance of the boidPrefab
             Transform new_bug = Instantiate(boidPrefab);
             new_bug.position = boids[i].position;
+            new_bug.eulerAngles = boids[i].forward;
             new_bug.parent = this.transform;
+            boidObjects[i] = new_bug;
        }
     }
 
@@ -100,19 +108,19 @@ public class Swarm : MonoBehaviour
     public void ResetBoidForces()
     {
         for(int i = 0; i < numberOfBoids; i++){
-            int[] neighbors = calculateNeighbors(i);
+            List<int> neighbors = calculateNeighbors(i); int N = neighbors.Count;
             boids[i].currentTotalForce = Vector3.zero;
             Vector3 temp;
             Vector3 x = boids[i].position;
-            if(neighbors.Length != 0){
+            if(N != 0){
                 // alignment = (1/N)(sum_{n=0}^N v_{a_n}) - v
 
                 temp = Vector3.zero;
                 foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].velocity; // v_{a_n}
                 }
-                temp /= neighbors.Length; // 1/N
-                temp -= boids[i].velocity; // -v (may be incorrect)
+                temp /= N; // 1/N
+                //temp -= boids[i].velocity; // -v (may be incorrect)
                 boids[i].alignment = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += alignmentWeight*(boids[i].alignment*boidForceScale - boids[i].velocity);
 
@@ -123,7 +131,7 @@ public class Swarm : MonoBehaviour
                 foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].position; // x_n
                 }
-                temp /= neighbors.Length; // 1/N
+                temp /= N; // 1/N
                 temp -= x; // -x
                 boids[i].cohesion = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += cohesionWeight*(boids[i].cohesion*boidForceScale - boids[i].velocity);
@@ -133,7 +141,7 @@ public class Swarm : MonoBehaviour
                 foreach(int n in neighbors){ // from 0 to N
                     temp = x - boids[n].position; // x - x_n
                 }
-                temp /= neighbors.Length; // 1/N
+                temp /= N; // 1/N
                 boids[i].separation = temp.normalized; // rule_{ki} should be normalized
                 boids[i].currentTotalForce += separationWeight*(boids[i].separation*boidForceScale - boids[i].velocity);
             } else {
@@ -150,17 +158,17 @@ public class Swarm : MonoBehaviour
             // plus all the walls
             if(x.x > 8f){
                 temp += Vector3.left;
-            } elif(x.x < -8f){
+            } else if(x.x < -8f){
                 temp += Vector3.right;
             }
             if(x.z > 8f){
                 temp += Vector3.back;
-            } elif(x.z < -8f){
+            } else if(x.z < -8f){
                 temp += Vector3.forward;
             }
             if(x.y > 4){
                 temp += Vector3.down;
-            } elif(x.y < 1){
+            } else if(x.y < 1){
                 temp += Vector3.up;
             }
             boids[i].obstacle = temp.normalized;
@@ -170,15 +178,15 @@ public class Swarm : MonoBehaviour
         // then add the path info to boid zero
     }
 
-    private int[] calculateNeighbors(int i){
-        int[] neighbors = new int[] {};
+    private List<int> calculateNeighbors(int i){
+        List<int> neighbors = new List<int>();
         for(int j = 0; j < numberOfBoids; j++){
             if(j != i){
                 Vector3 diffV = boids[i].position - boids[j].position;
                 if((diffV.sqrMagnitude < sqrNeighbourDistance) && // distance check
                     (Vector3.Dot(boids[i].forward, diffV) > 0)) // FOV check (180)
                 {
-                    neighbors[neighbors.Length]=j; // idk if this will add corectly
+                    neighbors.Add(j); // idk if this will add corectly
                 }
             }
         }
@@ -203,8 +211,11 @@ public class Swarm : MonoBehaviour
 
         // next we update all new velocities and positions
         for(int i = 0; i < numberOfBoids; i++){
-            boids[i].velocity = new_velocitys[i];
-            boids[i].position = new_positions[i];
+            boids[i].velocity = new_velocitys[i]; 
+            boids[i].forward = boids[i].velocity.normalized;
+            boids[i].position = new_positions[i]; 
+            boidObjects[i].position = boids[i].position;
+            boidObjects[i].eulerAngles = boids[i].forward;
         }
     }
 
