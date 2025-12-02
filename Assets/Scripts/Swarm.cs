@@ -121,8 +121,8 @@ public class Swarm : MonoBehaviour
                 }
                 temp /= N; // 1/N
                 //temp -= boids[i].velocity; // -v (may be incorrect)
-                boids[i].alignment = temp.normalized; // rule_{ki} should be normalized
-                boids[i].currentTotalForce += alignmentWeight*(boids[i].alignment*boidForceScale - boids[i].velocity);
+                boids[i].alignment = alignmentWeight*(temp.normalized*boidForceScale - boids[i].velocity); // rule_{ki} should be normalized
+                boids[i].currentTotalForce += boids[i].alignment;
 
 
                 // cohesion = (1/N)(sum_{n=0}^N x_n)-x
@@ -133,8 +133,8 @@ public class Swarm : MonoBehaviour
                 }
                 temp /= N; // 1/N
                 temp -= x; // -x
-                boids[i].cohesion = temp.normalized; // rule_{ki} should be normalized
-                boids[i].currentTotalForce += cohesionWeight*(boids[i].cohesion*boidForceScale - boids[i].velocity);
+                boids[i].cohesion = cohesionWeight*(temp.normalized*boidForceScale - boids[i].velocity); // rule_{ki} should be normalized
+                boids[i].currentTotalForce += boids[i].cohesion;
 
                 // separation = 1/N(sum_{n=0}^N x-x_n)
                 temp = Vector3.zero;
@@ -142,8 +142,8 @@ public class Swarm : MonoBehaviour
                     temp = x - boids[n].position; // x - x_n
                 }
                 temp /= N; // 1/N
-                boids[i].separation = temp.normalized; // rule_{ki} should be normalized
-                boids[i].currentTotalForce += separationWeight*(boids[i].separation*boidForceScale - boids[i].velocity);
+                boids[i].separation = separationWeight*(temp.normalized*boidForceScale - boids[i].velocity);; // rule_{ki} should be normalized
+                boids[i].currentTotalForce += boids[i].separation;
             } else {
                 // wander = v_i
                 boids[i].currentTotalForce += wanderWeight*(boids[i].velocity*boidForceScale - boids[i].velocity);
@@ -171,8 +171,8 @@ public class Swarm : MonoBehaviour
             } else if(x.y < 1){
                 temp += Vector3.up;
             }
-            boids[i].obstacle = temp.normalized;
-            boids[i].currentTotalForce += obstacleWeight*(boids[i].obstacle*boidForceScale - boids[i].velocity);
+            boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);;
+            boids[i].currentTotalForce += boids[i].obstacle;
         }
 
         // then add the path info to boid zero
