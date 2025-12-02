@@ -239,7 +239,7 @@ public class Swarm : MonoBehaviour
 
     private void Update()
     {
-        /* Render information for boidzero, useful for debugging forces and path planning
+        // Render information for boidzero, useful for debugging forces and path planning
         int boidCount = boids.Length;
         for (int i = 1; i < boidCount; i++)
         {
@@ -262,7 +262,7 @@ public class Swarm : MonoBehaviour
             for (int i = 0; i < cornersLength - 1; i++)
                 Debug.DrawLine(boidZeroPath.corners[i], boidZeroPath.corners[i + 1], Color.black);
         }
-        */
+        
     }
 
 
