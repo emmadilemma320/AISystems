@@ -107,9 +107,17 @@ public class Swarm : MonoBehaviour
     /// </summary>
     public void ResetBoidForces()
     {
+        // we start by zeroing out the forces of all the forces
+        for(int i = 0; i < numberOfBoids; i++){
+            boids[i].currentTotalForce = Vector3.zero;
+        }
+
+        // next we find/check the current goal and add the force of the goal rule to boidZero
+
+        // finally we add all remaining forces to *all* boids (zero and not zero)
         for(int i = 0; i < numberOfBoids; i++){
             List<int> neighbors = calculateNeighbors(i); int N = neighbors.Count;
-            boids[i].currentTotalForce = Vector3.zero;
+            
             Vector3 temp;
             Vector3 x = boids[i].position;
             if(N != 0){
@@ -266,8 +274,7 @@ public class Swarm : MonoBehaviour
     }
 
 
-    public void SetGoal(Vector3 goal)
-    {
+    public void SetGoal(Vector3 goal){
         if(!boidZeroNavigatingTowardGoal){
             boidZeroGoal = goal;
             boidZeroNavigatingTowardGoal = true;
