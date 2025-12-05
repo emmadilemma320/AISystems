@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.AI;
 
@@ -69,7 +70,6 @@ public class Swarm : MonoBehaviour
         InitBoids();
         new_positions = new Vector3[numberOfBoids];
         new_velocitys = new Vector3[numberOfBoids];
-
     }
 
     /// <summary>
@@ -105,18 +105,11 @@ public class Swarm : MonoBehaviour
     /// <summary>
     /// Reset the particle forces
     /// </summary>
-    public void ResetBoidForces()
-    {
-        // we start by zeroing out the forces of all the forces
-        for(int i = 0; i < numberOfBoids; i++){
-            boids[i].currentTotalForce = Vector3.zero;
-        }
-
-        // next we find/check the current goal and add the force of the goal rule to boidZero
-
-        // finally we add all remaining forces to *all* boids (zero and not zero)
+    public void ResetBoidForces(){
+        // first we calculate the forces that all the boids have
         for(int i = 0; i < numberOfBoids; i++){
             List<int> neighbors = calculateNeighbors(i); int N = neighbors.Count;
+            boids[i].currentTotalForce = Vector3.zero;
             
             Vector3 temp;
             Vector3 x = boids[i].position;
@@ -179,11 +172,39 @@ public class Swarm : MonoBehaviour
             } else if(x.y < 1){
                 temp += Vector3.up;
             }
-            boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);;
+            boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);
             boids[i].currentTotalForce += boids[i].obstacle;
         }
 
-        // then add the path info to boid zero
+        // next we find/check the current goal and add the force of the goal rule to boidZero
+        if (boidZeroNavigatingTowardGoal && (boidZeroPath.status==NavMeshPathStatus.PathComplete) && (boidZeroPath.corners.Length > 0)){
+            // first we find the point on the NavMesh boidZero is currently nearest to
+            Vector3 currentBoidNavMesh = Vector3.zero; NavMeshHit hit;
+            if(NavMesh.SamplePosition(boids[0].position, out hit, 1f, NavMesh.AllAreas)){
+                currentBoidNavMesh = hit.position;
+            } else {
+                print("error finding nav mesh point near boid");
+                return;
+            }
+
+            Vector3 toCurrentGoal = boidZeroPath.corners[currentCorner]-currentBoidNavMesh; 
+            // next, we check if it is within 1 distance from the corner
+            if(toCurrentGoal.magnitude < 1f){
+                // if we were on the last corner, reset + mark finished
+                if(currentCorner == (boidZeroPath.corners.Length - 1)) {
+                    boidZeroPath.ClearCorners();
+                    currentCorner = 0;
+                    boidZeroNavigatingTowardGoal = false;
+                } else { 
+                    // else, simply  move on to the next corner and recalculate the current goal vector
+                    toCurrentGoal = boidZeroPath.corners[currentCorner]-currentBoidNavMesh;
+                    currentCorner++;
+                }  
+            }
+
+            // after all this, we add the force from following the path to the forces acting on boidZero;
+            boids[0].currentTotalForce += goalWeight*(toCurrentGoal.normalized*boidForceScale - boids[0].velocity);
+        }
     }
 
     private List<int> calculateNeighbors(int i){
@@ -276,8 +297,45 @@ public class Swarm : MonoBehaviour
 
     public void SetGoal(Vector3 goal){
         if(!boidZeroNavigatingTowardGoal){
+            // is the NavMesh only at y=0.26??
+            Vector3 boidZeroStart;
+            // first we set the goal 
             boidZeroGoal = goal;
+
+            // next we set the path using the current position of boid[0] and the goal
+            boidZeroPath = new NavMeshPath();
+            NavMeshHit navMeshHit;
+
+            
+            if (NavMesh.SamplePosition(goal, out navMeshHit, 5.0f, NavMesh.AllAreas)){
+                print("found point on NavMesh "+navMeshHit.position+" near goal "+goal);
+                boidZeroGoal = navMeshHit.position;
+            } else {
+                print("error finding point near goal "+goal);
+                return;
+            } 
+            
+            if (NavMesh.SamplePosition(boids[0].position, out navMeshHit, 1.0f, NavMesh.AllAreas)){
+                print("found point on NavMesh "+navMeshHit.position+" near boidZero position "+boids[0].position);
+                boidZeroStart = navMeshHit.position;
+            } else {
+                print("error finding point near boidZero position "+boids[0].position);
+                return;
+            }
+            
+            print("attempting to find path for boid zero from"+boidZeroStart+" to "+boidZeroGoal);
+            if(NavMesh.CalculatePath(boidZeroStart, boidZeroGoal, NavMesh.AllAreas, boidZeroPath)){
+                print("Found path for boid zero: "+boidZeroPath.corners[0]);
+            } else{
+                print("error finding path for boid zero!");
+                return;
+            }
+            
+            // since we have succesfully found a path, we set boidZeroNavigatingTowardGoal to true
             boidZeroNavigatingTowardGoal = true;
+
+            // we also set the current corner to 0
+            currentCorner = 0;
         }
     }
 }
