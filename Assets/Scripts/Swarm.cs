@@ -96,6 +96,7 @@ public class Swarm : MonoBehaviour
             Transform new_bug = Instantiate(boidPrefab);
             new_bug.position = boids[i].position;
             new_bug.eulerAngles = boids[i].forward;
+            new_bug.name = "bug "+i;
             new_bug.parent = this.transform;
             boidObjects[i] = new_bug;
        }
@@ -155,18 +156,24 @@ public class Swarm : MonoBehaviour
             }
             // plus all the walls
             if(x.x > 8f){
+                //print("boid "+i+" ran into wall x=8f");
                 temp += new Vector3(-1f, 0f, 0f);
             } else if(x.x < -8f){
+                //print("boid "+i+" ran into wall x=-8f");
                 temp += new Vector3(1f, 0f, 0f);
             }
             if(x.z > 8f){
+                //print("boid "+i+" ran into wall z=8f");
                 temp += new Vector3(0f, 0f, -1f); 
             } else if(x.z < -8f){
+                //print("boid "+i+" ran into wall z=-8f");
                 temp += new Vector3(0f, 0f, 1f);
             }
             if(x.y > 4){
+                //print("boid "+i+" ran into wall y=4f");
                 temp += new Vector3(0f, -1f, 0f);
             } else if(x.y < 1){
+                //print("boid "+i+" ran into wall y=1f");
                 temp += new Vector3(0f, 1f, 0f);
             }
             boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);
@@ -180,7 +187,7 @@ public class Swarm : MonoBehaviour
             if(NavMesh.SamplePosition(boids[0].position, out meshHit, Mathf.Infinity, NavMesh.AllAreas)){
                 currentBoidNavMesh = meshHit.position;
             } else {
-                print("error finding nav mesh point near boid");
+                //print("error finding nav mesh point near boid");
                 return;
             }
 
@@ -262,7 +269,15 @@ public class Swarm : MonoBehaviour
             boids[i].position = new_positions[i]; 
             boidObjects[i].position = boids[i].position;
             boidObjects[i].eulerAngles = boids[i].forward;
+
+            Vector3 p = boidObjects[i].position;
+            if(Mathf.Abs(p.x) > 12 || Mathf.Abs(p.z) > 12 || p.y < -1 || p.y > 6)
+            {
+                print("boid "+i+" far out of bounds! "+p);
+            }
         }
+
+
     }
 
 
@@ -300,10 +315,10 @@ public class Swarm : MonoBehaviour
             // first we set the goal to the point on the nav mesh nearest to the input
             NavMeshHit navMeshHit;
             if (NavMesh.SamplePosition(goal, out navMeshHit, Mathf.Infinity, NavMesh.AllAreas)){
-                print("found point on NavMesh "+navMeshHit.position+" near goal "+goal);
+                //print("found point on NavMesh "+navMeshHit.position+" near goal "+goal);
                 boidZeroGoal = navMeshHit.position;
             } else {
-                print("error finding point near goal "+goal);
+                //print("error finding point near goal "+goal);
                 boidZeroGoal = goal;
                 return;
             } 
@@ -311,24 +326,24 @@ public class Swarm : MonoBehaviour
             // next we calculate the point on the nav mesh boidZero is currently nearest to
             Vector3 boidZeroStart;
             if (NavMesh.SamplePosition(boids[0].position, out navMeshHit, Mathf.Infinity, NavMesh.AllAreas)){
-                print("found point on NavMesh "+navMeshHit.position+" near boidZero position "+boids[0].position);
+                //print("found point on NavMesh "+navMeshHit.position+" near boidZero position "+boids[0].position);
                 boidZeroStart = navMeshHit.position;
             } else {
-                print("error finding point near boidZero position "+boids[0].position);
+                //print("error finding point near boidZero position "+boids[0].position);
                 return;
             }
 
             // finally we set the path using these two calculates points
             boidZeroPath = new NavMeshPath();
             if(NavMesh.CalculatePath(boidZeroStart, boidZeroGoal, NavMesh.AllAreas, boidZeroPath)){
-                print("Found path for boid zero with "+boidZeroPath.corners.Length+" corners");
+                //print("Found path for boid zero with "+boidZeroPath.corners.Length+" corners");
                 // since we have succesfully found a path, we set boidZeroNavigatingTowardGoal to true
                 boidZeroNavigatingTowardGoal = true;
 
                 // we also set the current corner to 0
                 currentCorner = 0;
             } else{
-                print("error finding path for boid zero!");
+                //print("error finding path for boid zero!");
                 return;
             }
         }
