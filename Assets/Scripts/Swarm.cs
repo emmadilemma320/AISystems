@@ -145,7 +145,7 @@ public class Swarm : MonoBehaviour
                 boids[i].currentTotalForce += boids[i].separation;
             } else {
                 // wander = v_i
-                boids[i].currentTotalForce += wanderWeight*(boids[i].velocity*boidForceScale - boids[i].velocity);
+                boids[i].currentTotalForce += wanderWeight*((boids[i].velocity).normalized*boidForceScale - boids[i].velocity);
             }
 
             // obstacle = sum of all obstacle normals within the obstacle check radius

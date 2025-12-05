@@ -20,7 +20,7 @@
 	force += cW**(temp.normalized*boidForceScale - v)
 
 7) [3] Correct implementation of the no neighbour wander rule
-	Done: if neighbours.Count == 0, the three forces above are *not* calculated, and instead the force is wW*(v*boidForceScale - v)
+	Done: if neighbours.Count == 0, the three forces above are *not* calculated, and instead the force is wW*(v.normalized*boidForceScale - v)
 
 8) [3] Correct implementation of obstacles rule
 	Done: first, obstacles are found using Physics.OverlapSphere(). For each obstacle found, the vector (x - o.ClosestPointOnBounds(x)).normalized is added to temp. Additionally, the walls are checked manually and their normals are added as well; after all obstacles (including walls) are accounted for, the force oW*(temp.normalized*boidForceScale - v) is added to the current forces
