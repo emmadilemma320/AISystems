@@ -179,9 +179,9 @@ public class Swarm : MonoBehaviour
         // next we find/check the current goal and add the force of the goal rule to boidZero
         if (boidZeroNavigatingTowardGoal && (boidZeroPath.status==NavMeshPathStatus.PathComplete) && (boidZeroPath.corners.Length > 0)){
             // first we find the point on the NavMesh boidZero is currently nearest to
-            Vector3 currentBoidNavMesh = Vector3.zero; NavMeshHit hit;
-            if(NavMesh.SamplePosition(boids[0].position, out hit, 1f, NavMesh.AllAreas)){
-                currentBoidNavMesh = hit.position;
+            Vector3 currentBoidNavMesh = Vector3.zero; NavMeshHit meshHit;
+            if(NavMesh.SamplePosition(boids[0].position, out meshHit, Mathf.Infinity, NavMesh.AllAreas)){
+                currentBoidNavMesh = meshHit.position;
             } else {
                 print("error finding nav mesh point near boid");
                 return;
@@ -191,10 +191,12 @@ public class Swarm : MonoBehaviour
             // next, we check if it is within 1 distance from the corner
             if(toCurrentGoal.magnitude < 1f){
                 // if we were on the last corner, reset + mark finished
+                print("reached corner "+currentCorner);
                 if(currentCorner == (boidZeroPath.corners.Length - 1)) {
                     boidZeroPath.ClearCorners();
                     currentCorner = 0;
                     boidZeroNavigatingTowardGoal = false;
+                    print("reached goal");
                 } else { 
                     // else, simply  move on to the next corner and recalculate the current goal vector
                     toCurrentGoal = boidZeroPath.corners[currentCorner]-currentBoidNavMesh;
@@ -297,45 +299,40 @@ public class Swarm : MonoBehaviour
 
     public void SetGoal(Vector3 goal){
         if(!boidZeroNavigatingTowardGoal){
-            // is the NavMesh only at y=0.26??
-            Vector3 boidZeroStart;
-            // first we set the goal 
-            boidZeroGoal = goal;
-
-            // next we set the path using the current position of boid[0] and the goal
-            boidZeroPath = new NavMeshPath();
+            // first we set the goal to the point on the nav mesh nearest to the input
             NavMeshHit navMeshHit;
-
-            
-            if (NavMesh.SamplePosition(goal, out navMeshHit, 5.0f, NavMesh.AllAreas)){
+            if (NavMesh.SamplePosition(goal, out navMeshHit, Mathf.Infinity, NavMesh.AllAreas)){
                 print("found point on NavMesh "+navMeshHit.position+" near goal "+goal);
                 boidZeroGoal = navMeshHit.position;
             } else {
                 print("error finding point near goal "+goal);
+                boidZeroGoal = goal;
                 return;
             } 
-            
-            if (NavMesh.SamplePosition(boids[0].position, out navMeshHit, 1.0f, NavMesh.AllAreas)){
+
+            // next we calculate the point on the nav mesh boidZero is currently nearest to
+            Vector3 boidZeroStart;
+            if (NavMesh.SamplePosition(boids[0].position, out navMeshHit, Mathf.Infinity, NavMesh.AllAreas)){
                 print("found point on NavMesh "+navMeshHit.position+" near boidZero position "+boids[0].position);
                 boidZeroStart = navMeshHit.position;
             } else {
                 print("error finding point near boidZero position "+boids[0].position);
                 return;
             }
-            
-            print("attempting to find path for boid zero from"+boidZeroStart+" to "+boidZeroGoal);
+
+            // finally we set the path using these two calculates points
+            boidZeroPath = new NavMeshPath();
             if(NavMesh.CalculatePath(boidZeroStart, boidZeroGoal, NavMesh.AllAreas, boidZeroPath)){
-                print("Found path for boid zero: "+boidZeroPath.corners[0]);
+                print("Found path for boid zero with "+boidZeroPath.corners.Length+" corners");
+                // since we have succesfully found a path, we set boidZeroNavigatingTowardGoal to true
+                boidZeroNavigatingTowardGoal = true;
+
+                // we also set the current corner to 0
+                currentCorner = 0;
             } else{
                 print("error finding path for boid zero!");
                 return;
             }
-            
-            // since we have succesfully found a path, we set boidZeroNavigatingTowardGoal to true
-            boidZeroNavigatingTowardGoal = true;
-
-            // we also set the current corner to 0
-            currentCorner = 0;
         }
     }
 }
