@@ -156,24 +156,24 @@ public class Swarm : MonoBehaviour
             }
             // plus all the walls
             if(x.x > 8f){
-                //print("boid "+i+" ran into wall x=8f");
+                print("boid "+i+" ran into wall x=8f");
                 temp += new Vector3(-1f, 0f, 0f);
             } else if(x.x < -8f){
-                //print("boid "+i+" ran into wall x=-8f");
+                print("boid "+i+" ran into wall x=-8f");
                 temp += new Vector3(1f, 0f, 0f);
             }
             if(x.z > 8f){
-                //print("boid "+i+" ran into wall z=8f");
+                print("boid "+i+" ran into wall z=8f");
                 temp += new Vector3(0f, 0f, -1f); 
             } else if(x.z < -8f){
-                //print("boid "+i+" ran into wall z=-8f");
+                print("boid "+i+" ran into wall z=-8f");
                 temp += new Vector3(0f, 0f, 1f);
             }
             if(x.y > 4){
-                //print("boid "+i+" ran into wall y=4f");
+                print("boid "+i+" ran into wall y=4f");
                 temp += new Vector3(0f, -1f, 0f);
             } else if(x.y < 1){
-                //print("boid "+i+" ran into wall y=1f");
+                print("boid "+i+" ran into wall y=1f");
                 temp += new Vector3(0f, 1f, 0f);
             }
             boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);
