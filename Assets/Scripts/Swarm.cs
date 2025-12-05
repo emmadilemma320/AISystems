@@ -114,20 +114,17 @@ public class Swarm : MonoBehaviour
             Vector3 temp;
             Vector3 x = boids[i].position;
             if(N != 0){
-                // alignment = (1/N)(sum_{n=0}^N v_{a_n}) - v
-
+                // alignment = (1/N)(sum_{n=0}^N v_{a_n}) 
                 temp = Vector3.zero;
                 foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].velocity; // v_{a_n}
                 }
                 temp /= N; // 1/N
-                //temp -= boids[i].velocity; // -v (may be incorrect)
                 boids[i].alignment = alignmentWeight*(temp.normalized*boidForceScale - boids[i].velocity); // rule_{ki} should be normalized
                 boids[i].currentTotalForce += boids[i].alignment;
 
 
                 // cohesion = (1/N)(sum_{n=0}^N x_n)-x
-
                 temp = Vector3.zero;
                 foreach(int n in neighbors){ // from 0 to N
                     temp += boids[n].position; // x_n
@@ -143,7 +140,7 @@ public class Swarm : MonoBehaviour
                     temp = x - boids[n].position; // x - x_n
                 }
                 temp /= N; // 1/N
-                boids[i].separation = separationWeight*(temp.normalized*boidForceScale - boids[i].velocity);; // rule_{ki} should be normalized
+                boids[i].separation = separationWeight*(temp.normalized*boidForceScale - boids[i].velocity); // rule_{ki} should be normalized
                 boids[i].currentTotalForce += boids[i].separation;
             } else {
                 // wander = v_i
@@ -158,26 +155,26 @@ public class Swarm : MonoBehaviour
             }
             // plus all the walls
             if(x.x > 8f){
-                temp += Vector3.left;
+                temp += new Vector3(-1f, 0f, 0f);
             } else if(x.x < -8f){
-                temp += Vector3.right;
+                temp += new Vector3(1f, 0f, 0f);
             }
             if(x.z > 8f){
-                temp += Vector3.back;
+                temp += new Vector3(0f, 0f, -1f); 
             } else if(x.z < -8f){
-                temp += Vector3.forward;
+                temp += new Vector3(0f, 0f, 1f);
             }
             if(x.y > 4){
-                temp += Vector3.down;
+                temp += new Vector3(0f, -1f, 0f);
             } else if(x.y < 1){
-                temp += Vector3.up;
+                temp += new Vector3(0f, 1f, 0f);
             }
             boids[i].obstacle = obstacleWeight*(temp.normalized*boidForceScale - boids[i].velocity);
             boids[i].currentTotalForce += boids[i].obstacle;
         }
 
         // next we find/check the current goal and add the force of the goal rule to boidZero
-        if (boidZeroNavigatingTowardGoal && (boidZeroPath.status==NavMeshPathStatus.PathComplete) && (boidZeroPath.corners.Length > 0)){
+        if (boidZeroNavigatingTowardGoal && (boidZeroPath.status==NavMeshPathStatus.PathComplete) && (boidZeroPath.corners.Length > 1)){
             // first we find the point on the NavMesh boidZero is currently nearest to
             Vector3 currentBoidNavMesh = Vector3.zero; NavMeshHit meshHit;
             if(NavMesh.SamplePosition(boids[0].position, out meshHit, Mathf.Infinity, NavMesh.AllAreas)){
@@ -197,6 +194,7 @@ public class Swarm : MonoBehaviour
                     currentCorner = 0;
                     boidZeroNavigatingTowardGoal = false;
                     print("reached goal");
+                    return;
                 } else { 
                     // else, simply  move on to the next corner and recalculate the current goal vector
                     toCurrentGoal = boidZeroPath.corners[currentCorner]-currentBoidNavMesh;
