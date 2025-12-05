@@ -47,8 +47,10 @@
 	Done: the boids are updated in FixedUpdate() using Time.fixedDeltaTime (same as a2)
 
 16) [1] The recorded testcase requires that the default values in the testcase are preserved.
+	It is hard to tell due to the randomness but I believe my boids act in a similar manner
 
 17) You must submit a SINGLE file called <lastname>-<firstname>-a3.zip (replace the <> with your information) that includes all the necessary files. You must follow the .gitignore pattern for Unity. [-2 marks if you do not follow these guidelines]
+	Done: this folder
 
 18) You must include a readme.txt file that describes in full detail which of the required elements you have completed successfully and which ones you have not. [-5 Marks if you do not include this file, and partial loss of marks for each component you do not include].
 	Done: this file
